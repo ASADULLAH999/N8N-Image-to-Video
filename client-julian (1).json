@@ -1,0 +1,237 @@
+{
+  "name": "client-julian",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Generate-image -to -video",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "prompt",
+              "placeholder": "Describe how you want the video to look",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Image URL",
+              "placeholder": "Paste your image link here",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.3,
+      "position": [
+        -1040,
+        96
+      ],
+      "id": "e3c4aa49-f641-44c4-abe7-f96257af7f69",
+      "name": "On form submission",
+      "webhookId": "4cd1f4f4-ad90-4593-a8d2-6a8aacf61ec7"
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        -624,
+        96
+      ],
+      "id": "5f7a758c-1d7c-4935-921e-215f2df1d607",
+      "name": "Wait",
+      "webhookId": "3d9cfcaf-982c-46bf-abea-f292a2592ea1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b4961bb3-17cf-480f-8aaa-e06b4c0a6297",
+              "leftValue": "={{$json[\"data\"][\"successFlag\"]}}",
+              "rightValue": 1,
+              "operator": {
+                "type": "number",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -208,
+        96
+      ],
+      "id": "1dd99d46-c51f-4012-9b5d-d61599d28f51",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "url": "=https://api.kie.ai/api/v1/veo/record-info?taskId={{$json[\"data\"][\"taskId\"]}}\n\n",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer c6ca4eab6ec67bc8b644d0f64ac54a1c"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -416,
+        96
+      ],
+      "id": "0cfa5d84-da53-4355-9b1a-3af397f7897c",
+      "name": "HTTP Request Node – Check Video Status"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.kie.ai/api/v1/veo/generate",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer c6ca4eab6ec67bc8b644d0f64ac54a1c"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"prompt\": \"{{$json.prompt}}\",\n  \"imageUrls\": [\"{{$json['Image URL']}}\"],\n  \"model\": \"veo3\",\n  \"aspectRatio\": \"16:9\",\n  \"enableTranslation\": true\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -832,
+        96
+      ],
+      "id": "4ded5615-f7dc-4f2d-8048-073043f004d7",
+      "name": "HTTP Request Node –  Video Generation"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "804ef6ea-6e30-49d5-9b0d-a73dc80ff466",
+              "name": "video_url",
+              "value": "={{$json[\"data\"][\"response\"][\"resultUrls\"][0]}}\n",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        0
+      ],
+      "id": "2a324b63-219f-4029-91aa-f85769bca03c",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Node –  Video Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request Node – Check Video Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Node – Check Video Status": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request Node –  Video Generation": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "842be731-e3e6-4480-a4dd-cb5fc8ce8619",
+  "meta": {
+    "instanceId": "516511696c638b591562323993e59143377aa3beac042b5520773d0115e8731c"
+  },
+  "id": "vXRDzYNPbSDBZiQF",
+  "tags": []
+}
